@@ -1,0 +1,6 @@
+*.log
+/__pycache__
+/log
+/rab_python_packages
+**/__pycache__
+/libsodium-1.0.18
