@@ -80,7 +80,7 @@ def test_ssr_access():
     ssr_port = ssr_config["ssr_config"]["ssr_port"]
     proxy = {
         "http": "socks5://127.0.0.1:" + str(ssr_port),
-        "https": "socks5://127.0.0.1:" + str(ssr_port),
+        "https": "socks5://127.0.0.1:" + str(ssr_port)
     }
     for access_test_url in access_test_urls:
         try:
@@ -96,6 +96,33 @@ def test_ssr_access():
             print("测试代理访问网站出错！错误信息：" + str(e))
             return False
     return True
+
+"""
+@description: 测试代理是否满足限制条件
+-------
+@param:
+-------
+@return:
+"""
+def test_proxy_limit():
+    # 超时时间
+    timeout = int(ssr_config["access_test_config"]["access_test_timeout"])
+    # 本地代理端口
+    ssr_port = ssr_config["ssr_config"]["ssr_port"]
+    proxy = {
+        "http": "socks5://127.0.0.1:" + str(ssr_port),
+        "https": "socks5://127.0.0.1:" + str(ssr_port)
+    }
+    try:
+        res = url = requests.get("http://ip-api.com/json/?lang=zh-CN",
+                                 proxies=proxy,
+                                 timeout=timeout)
+        if (json.loads(res.text)["country"] in json.loads(
+                ssr_config["proxy_limit"]["proxy_location"])):
+            return True
+    except Exception as e:
+        print("测试代理是否满足限制条件时出错！" + str(e))
+    return False
 
 
 """
@@ -117,11 +144,11 @@ if __name__ == "__main__":
         # 重启 SSR
         os.system("ssr stop")
         os.system("ssr start")
-        # 测试此代理是否可以访问所有测试页面
-        if (test_ssr_access()):
-            print("代理测试通过！当前代理信息：")
-            print(ssr_info)
-            break
-        else:
-            continue
+        # 首先测试该代理是否满足限制条件
+        if (test_proxy_limit()):
+            # 测试此代理是否可以访问所有测试页面
+            if (test_ssr_access()):
+                print("代理测试通过！当前代理信息：")
+                print(ssr_info)
+                break
 
