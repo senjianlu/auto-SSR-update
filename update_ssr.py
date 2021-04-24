@@ -120,6 +120,8 @@ def test_proxy_limit(ip_before_update):
         if (json.loads(res.text)["country"] in json.loads(
                     ssr_config["proxy_limit"]["proxy_location"])
                 and ip_before_update != json.loads(res.text)["query"]):
+            print("更新前 IP：" + ip_before_update)
+            print("更新后 IP：" + json.loads(res.text)["query"])
             return True
     except Exception as e:
         print("测试代理是否满足限制条件时出错！" + str(e))
