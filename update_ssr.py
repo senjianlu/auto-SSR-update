@@ -104,7 +104,7 @@ def test_ssr_access():
 -------
 @return:
 """
-def test_proxy_limit():
+def test_proxy_limit(ip_before_update):
     # 超时时间
     timeout = int(ssr_config["access_test_config"]["access_test_timeout"])
     # 本地代理端口
@@ -118,11 +118,37 @@ def test_proxy_limit():
                                  proxies=proxy,
                                  timeout=timeout)
         if (json.loads(res.text)["country"] in json.loads(
-                ssr_config["proxy_limit"]["proxy_location"])):
+                    ssr_config["proxy_limit"]["proxy_location"])
+                and ip_before_update != json.loads(res.text)["query"]):
             return True
     except Exception as e:
         print("测试代理是否满足限制条件时出错！" + str(e))
     return False
+
+"""
+@description: 获取更新前的 IP 地址
+-------
+@param:
+-------
+@return:
+"""
+def get_ip_before_update():
+    # 超时时间
+    timeout = int(ssr_config["access_test_config"]["access_test_timeout"])
+    # 本地代理端口
+    ssr_port = ssr_config["ssr_config"]["ssr_port"]
+    proxy = {
+        "http": "socks5://127.0.0.1:" + str(ssr_port),
+        "https": "socks5://127.0.0.1:" + str(ssr_port)
+    }
+    try:
+        res = url = requests.get("http://ip-api.com/json/?lang=zh-CN",
+                                 proxies=proxy,
+                                 timeout=timeout)
+        return json.loads(res.text)["query"]
+    except Exception as e:
+        print("获取更新前的 IP 地址时出错！" + str(e))
+    return "0.0.0.0"
 
 
 """
@@ -133,6 +159,8 @@ def test_proxy_limit():
 @return:
 """
 if __name__ == "__main__":
+    # 获取更新前的 IP 地址
+    ip_before_update = get_ip_before_update()
     # 从配置文件中获取订阅链接并解析为代理信息
     ssr_subscription_urls = json.loads(
         ssr_config["ssr_config"]["ssr_subscription_urls"])
@@ -145,7 +173,7 @@ if __name__ == "__main__":
         os.system("ssr stop")
         os.system("ssr start")
         # 首先测试该代理是否满足限制条件
-        if (test_proxy_limit()):
+        if (test_proxy_limit(ip_before_update)):
             # 测试此代理是否可以访问所有测试页面
             if (test_ssr_access()):
                 print("代理测试通过！当前代理信息：")
